@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Care App - Bulk Upload</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+    <style>
+        body { font-family: sans-serif; padding: 40px; background-color: #f4f6f8; text-align: center; }
+        .card { background: white; max-width: 500px; margin: 0 auto; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h2 { color: #1E3A8A; margin-bottom: 20px; }
+        input { margin: 20px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; width: 100%; box-sizing: border-box; }
+        button { background-color: #1E3A8A; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; transition: 0.2s; }
+        button:hover { background-color: #152C6B; }
+        #status { margin-top: 20px; font-weight: bold; color: #555; white-space: pre-wrap; text-align: left; max-height: 200px; overflow-y: auto; background: #eee; padding: 10px; border-radius: 5px; display: none; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>🏥 Bulk Upload Centers</h2>
+        <p>Select a CSV file to upload data to Firebase.</p>
+        
+        <input type="file" id="csvFile" accept=".csv">
+        <button onclick="processUpload()">Upload Data</button>
+        
+        <div id="status"></div>
+    </div>
+
+    <script>
+        // --- 3. YOUR FIREBASE CONFIGURATION ---
+        // TODO: Replace this object with your own keys from Firebase Console
+        const firebaseConfig = {
+          apiKey: "YOUR_API_KEY_HERE",
+          authDomain: "YOUR_AUTH_DOMAIN_HERE",
+          projectId: "YOUR_PROJECT_ID_HERE",
+          storageBucket: "YOUR_STORAGE_BUCKET_HERE",
+          messagingSenderId: "YOUR_MESSAGING_SENDER_ID_HERE",
+          appId: "YOUR_APP_ID_HERE",
+          measurementId: "YOUR_MEASUREMENT_ID_HERE"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function log(msg, type = 'normal') {
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            let color = type === 'error' ? 'red' : (type === 'success' ? 'green' : 'black');
+            status.innerHTML += `<div style="color:${color}">${msg}</div>`;
+            status.scrollTop = status.scrollHeight; // Auto scroll
+        }
+
+        function processUpload() {
+            const fileInput = document.getElementById('csvFile');
+            if (fileInput.files.length === 0) {
+                alert("Please select a CSV file first!");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            document.getElementById('status').innerHTML = "⏳ Reading file...";
+            document.getElementById('status').style.display = 'block';
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    uploadToFirebase(results.data);
+                },
+                error: function(err) {
+                    log("Error reading CSV: " + err.message, 'error');
+                }
+            });
+        }
+
+        async function uploadToFirebase(data) {
+            log(`Found ${data.length} rows. Starting upload...`);
+            let count = 0;
+            let errors = 0;
+
+            for (const row of data) {
+                try {
+                    // Data Validation & Cleaning
+                    if (!row.name || !row.latitude || !row.longitude) {
+                        log(`Skipping invalid row: ${row.name || 'Unknown'}`, 'error');
+                        continue;
+                    }
+
+                    // Convert lat/lng to numbers
+                    const docData = {
+                        name: row.name.trim(),
+                        address: row.address ? row.address.trim() : "",
+                        contact_number: row.contact_number ? row.contact_number.toString().trim() : "",
+                        latitude: parseFloat(row.latitude),
+                        longitude: parseFloat(row.longitude),
+                        partner_name: row.partner_name ? row.partner_name.trim() : "Unknown",
+                        base_hospital: row.base_hospital ? row.base_hospital.trim() : "Unknown",
+                        centre_type: row.centre_type ? row.centre_type.trim() : "Eye Centre"
+                    };
+
+                    await db.collection("centers").add(docData);
+                    count++;
+                    log(`✅ Uploaded: ${docData.name}`, 'success');
+
+                } catch (e) {
+                    console.error(e);
+                    errors++;
+                    log(`❌ Failed: ${row.name} - ${e.message}`, 'error');
+                }
+            }
+
+            log(`\n--- DONE! ---\nSuccess: ${count}\nErrors: ${errors}`);
+            if(count > 0) alert(`Success! ${count} centers uploaded.`);
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,42 @@
+name: eye_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.10.1 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
+  http: ^1.6.0
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  url_launcher: ^6.3.2
+  sqflite: ^2.4.2
+  path: ^1.9.1
+  firebase_core: ^4.2.1
+  cloud_firestore: ^6.1.0
+  flutter_map_cancellable_tile_provider: ^3.1.1
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  # Icon Generator Package
+  flutter_launcher_icons: ^0.14.4
+
+# --- ICON CONFIGURATION (Must be at root level, no spaces at start) ---
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/icon.png" 
+  min_sdk_android: 21
+
+flutter:
+  uses-material-design: true
+  assets:
+  - assets/splash.gif 
