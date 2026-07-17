@@ -13,11 +13,11 @@ service cloud.firestore {
       // 2. ADMIN WRITE/DELETE ACCESS
       // In production, we restrict write and delete permissions to authenticated administrative users.
       // (Note: To implement this, you must configure Firebase Auth in the frontend and admin uploader).
-      allow write, delete: if request.auth != null;
+      // allow write, delete: if request.auth != null;
       
       // DEVELOPMENT BYPASS (Alternative)
       // Un-comment the line below to permit unauthenticated additions/removals during development only.
-      // allow write, delete: if true;
+         allow write, delete: if true;
     }
   }
 }
